@@ -1,0 +1,37 @@
+{
+    "id": "dans-qol",
+    "title": "Dan's QoL",
+    "description": "Quality-of-life features for Foundry VTT and dnd5e. Each feature is independently toggleable and defaults to off.",
+    "version": "0.1.0",
+    "compatibility": {
+        "minimum": 14,
+        "verified": "14.361"
+    },
+    "authors": [
+        {
+            "name": "Dan Elbert",
+            "url": "https://github.com/DanElbert"
+        }
+    ],
+    "esmodules": [
+        "scripts/main.mjs"
+    ],
+    "styles": [
+        "styles/gm-only-secrets.css"
+    ],
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json"
+        }
+    ],
+    "url": "https://github.com/DanElbert/foundryvtt_dans-qol",
+    "manifest": "https://raw.githubusercontent.com/DanElbert/foundryvtt_dans-qol/main/module.json",
+    "download": "https://github.com/DanElbert/foundryvtt_dans-qol/archive/refs/heads/main.zip",
+    "documentTypes": {
+        "RegionBehavior": {
+            "clickMacro": {}
+        }
+    }
+}

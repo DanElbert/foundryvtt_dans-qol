@@ -1,6 +1,5 @@
 {
     "TYPES.RegionBehavior.dans-qol.clickMacro": "Execute Macro on Click",
-    "TYPES.RegionBehavior.region-click-macro.clickMacro": "Execute Macro on Click",
     "DANS_QOL": {
         "REGION_CLICK": {
             "BEHAVIOR": {

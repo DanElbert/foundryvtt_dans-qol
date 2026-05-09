@@ -95,14 +95,13 @@ Hides unrevealed `<section class="secret">` blocks from non-GM users. Useful whe
 
 If those caveats are deal-breakers, you'd need a libWrapper-based approach that overrides the `secrets: <doc>.isOwner` argument that dnd5e passes to `TextEditor.enrichHTML`. Out of scope for this module.
 
-## Migration from older modules
+## Replacing older modules
 
 If you're coming from `region-click-macro` and/or `dans-5e-templates`:
 
-1. Install Dan's QoL via the manifest URL above.
-2. Re-set toggles in Configure Settings (settings don't carry over because the module id changed).
-3. On first world load with this module installed (and as GM), any existing **Execute Macro on Click** behaviors are automatically rewritten from the old `region-click-macro.clickMacro` type to `dans-qol.clickMacro`. The migration runs once per world and skips itself thereafter. Watch the browser console for `dans-qol | migrated N region behavior(s)…`.
-4. Once every world with old data has been opened at least once with this module installed, you can uninstall `region-click-macro` and `dans-5e-templates`.
+1. Install Dan's QoL via the manifest URL above and set toggles in Configure Settings.
+2. Existing **Execute Macro on Click** region behaviors created under the old `region-click-macro` module are not auto-migrated. Recreate them on each scene under the new type, then uninstall the old module.
+3. Settings don't carry over (the module id changed). Re-pick them.
 
 ## Settings persistence
 

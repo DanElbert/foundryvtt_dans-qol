@@ -1,9 +1,7 @@
-import { MODULE_ID, SETTINGS } from "../settings.mjs";
+import { MODULE_ID } from "../settings.mjs";
 import { log } from "../log.mjs";
 
-const NEW_TYPE = "dans-qol.clickMacro";
-const OLD_TYPE = "region-click-macro.clickMacro";
-const KNOWN_TYPES = new Set([NEW_TYPE, OLD_TYPE]);
+const TYPE = `${MODULE_ID}.clickMacro`;
 const CLICK_EVENT_NAME = "regionClickLeft";
 const TYPE_ICON = "fa-solid fa-arrow-pointer";
 
@@ -62,11 +60,9 @@ class ClickMacroBehaviorType extends foundry.data.regionBehaviors.RegionBehavior
 }
 
 export function registerRegionClickType() {
-    CONFIG.RegionBehavior.dataModels[NEW_TYPE] = ClickMacroBehaviorType;
-    CONFIG.RegionBehavior.dataModels[OLD_TYPE] = ClickMacroBehaviorType;
+    CONFIG.RegionBehavior.dataModels[TYPE] = ClickMacroBehaviorType;
     CONFIG.RegionBehavior.typeIcons ??= {};
-    CONFIG.RegionBehavior.typeIcons[NEW_TYPE] = TYPE_ICON;
-    CONFIG.RegionBehavior.typeIcons[OLD_TYPE] = TYPE_ICON;
+    CONFIG.RegionBehavior.typeIcons[TYPE] = TYPE_ICON;
 }
 
 export function registerRegionClickDispatch() {
@@ -107,7 +103,7 @@ async function dispatchRegionClicks(event) {
     for (const regionDoc of scene.regions) {
         if (!regionDoc.polygonTree?.testPoint(point)) continue;
         for (const behavior of regionDoc.behaviors) {
-            if (!KNOWN_TYPES.has(behavior.type)) continue;
+            if (behavior.type !== TYPE) continue;
             if (behavior.disabled) continue;
             try {
                 await behavior._handleRegionEvent({ ...regionEvent, region: regionDoc });
@@ -116,34 +112,4 @@ async function dispatchRegionClicks(event) {
             }
         }
     }
-}
-
-export async function migrateRegionClickType() {
-    if (!game.user.isGM) return;
-    if (game.settings.get(MODULE_ID, SETTINGS.regionClickMigrated)) return;
-
-    let migrated = 0;
-    let errors = 0;
-    for (const scene of game.scenes) {
-        for (const region of scene.regions) {
-            for (const behavior of region.behaviors) {
-                if (behavior.type !== OLD_TYPE) continue;
-                try {
-                    await behavior.update({ type: NEW_TYPE });
-                    migrated += 1;
-                } catch (err) {
-                    log.error(`failed to migrate behavior ${behavior.uuid}`, err);
-                    errors += 1;
-                }
-            }
-        }
-    }
-
-    if (errors > 0) {
-        log.warn(`migrated ${migrated} region behavior(s); ${errors} failed, will retry next session`);
-        return;
-    }
-
-    await game.settings.set(MODULE_ID, SETTINGS.regionClickMigrated, true);
-    if (migrated > 0) log.info(`migrated ${migrated} region behavior(s) from region-click-macro to dans-qol`);
 }

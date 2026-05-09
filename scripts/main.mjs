@@ -1,7 +1,8 @@
 import { MODULE_ID, SETTINGS, registerSettings } from "./settings.mjs";
+import { log } from "./log.mjs";
 import { registerConeDefaults } from "./features/cone-defaults.mjs";
 import { registerKeyboardRotation } from "./features/keyboard-rotation.mjs";
-import { registerRegionClickType, registerRegionClickDispatch, migrateRegionClickType } from "./features/region-click.mjs";
+import { registerRegionClickType, registerRegionClickDispatch } from "./features/region-click.mjs";
 import { registerGMOnlySecrets } from "./features/gm-only-secrets.mjs";
 
 const enabled = key => game.settings.get(MODULE_ID, key);
@@ -9,21 +10,22 @@ const enabled = key => game.settings.get(MODULE_ID, key);
 Hooks.once("init", () => {
     registerSettings();
 
-    // Always-on: registers the RegionBehavior data model under both the old and
-    // new type strings so existing world data loads regardless of feature toggle
-    // or migration state.
+    const active = [];
+
+    // Always-on: registers the RegionBehavior data model so any existing
+    // behaviors in scene data resolve, regardless of dispatch toggle state.
     registerRegionClickType();
+    active.push("region-click-type (always)");
 
     // Always-on: keybindings must register at init regardless of toggle state,
     // because game.keybindings.register throws after init. The handler reads
     // the setting at runtime so toggling takes effect without a reload.
     registerKeyboardRotation();
+    active.push(`keyboard-rotation (always; toggle: ${enabled(SETTINGS.rotationEnabled) ? "on" : "off"})`);
 
-    if (enabled(SETTINGS.coneEnabled)) registerConeDefaults();
-    if (enabled(SETTINGS.regionClickEnabled)) registerRegionClickDispatch();
-    if (enabled(SETTINGS.secretsHideEnabled)) registerGMOnlySecrets();
-});
+    if (enabled(SETTINGS.coneEnabled)) { registerConeDefaults(); active.push("cone-defaults"); }
+    if (enabled(SETTINGS.regionClickEnabled)) { registerRegionClickDispatch(); active.push("region-click-dispatch"); }
+    if (enabled(SETTINGS.secretsHideEnabled)) { registerGMOnlySecrets(); active.push("gm-only-secrets"); }
 
-Hooks.once("ready", () => {
-    migrateRegionClickType();
+    log.info(`init complete; active: ${active.join(", ")}`);
 });

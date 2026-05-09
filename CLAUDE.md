@@ -11,12 +11,12 @@ A Foundry VTT v14 module bundling four small independent features, each gated by
 | File | Role |
 |---|---|
 | `module.json` | Foundry manifest. Compatibility minimum 14, verified 14.361. Declares the `clickMacro` RegionBehavior document type. |
-| `scripts/main.mjs` | Entry. `init` registers settings, always-on RegionBehavior type, then conditionally each feature's hooks. `ready` runs the region-click migration. |
+| `scripts/main.mjs` | Entry. `init` registers settings, always-on RegionBehavior type and keybindings, then conditionally each gated feature's hooks. |
 | `scripts/settings.mjs` | `MODULE_ID`, `SETTINGS` map, `registerSettings()`. |
 | `scripts/log.mjs` | Shared `[dans-qol]` console wrapper. |
 | `scripts/features/cone-defaults.mjs` | `registerConeDefaults()`. `getSceneControlButtons` hook merges `{angle, curvature}` into `controls.regions.tools.cone.shapeData`. |
 | `scripts/features/keyboard-rotation.mjs` | `registerKeyboardRotation()`. Q/E keybindings rotating an active MeasuredTemplate preview. |
-| `scripts/features/region-click.mjs` | `ClickMacroBehaviorType` data model + type registration (canonical + alias) + click dispatch + migration. |
+| `scripts/features/region-click.mjs` | `ClickMacroBehaviorType` data model + type registration + click dispatch. |
 | `scripts/features/gm-only-secrets.mjs` | `ready` hook adds body classes. The work is in `styles/gm-only-secrets.css`. |
 | `styles/gm-only-secrets.css` | Hides `.secret` for non-GMs. Scoped to `body.dans-qol-secrets` so the rules don't apply unless the feature is enabled. |
 | `lang/en.json` | RegionBehavior type display names plus ClickMacro field/permission strings. |
@@ -54,30 +54,11 @@ Two registrations are deliberate exceptions to init-time gating:
 
 The other three features (cone defaults, region click dispatch, GM-only secrets) gate registration at init and use `requiresReload: true` on their toggle settings, because their hooks have no cheap runtime gate.
 
-## RegionBehavior type aliasing plus migration
+## RegionBehavior type registration
 
-The `ClickMacroBehaviorType` data model class is registered under two type strings:
+`ClickMacroBehaviorType` is registered under a single type string `dans-qol.clickMacro` in `CONFIG.RegionBehavior.dataModels`. Behaviors created under the old `region-click-macro` module are not auto-migrated; users are expected to recreate them under the new type.
 
-- `dans-qol.clickMacro` — canonical, used for all newly created behaviors.
-- `region-click-macro.clickMacro` — alias for backwards compatibility with worlds last edited under the old `region_click_macro` module.
-
-Both keys map to the same class with the same schema, so existing behaviors load and dispatch under either type.
-
-`migrateRegionClickType()` runs once on `ready`, GM-only:
-
-1. Bails if the world setting `regionClickTypeMigrated` is true.
-2. Walks `game.scenes → regions → behaviors`, calling `behavior.update({type: NEW_TYPE})` on each old-typed behavior.
-3. Sets the guard only if there were zero errors. Partial failures will retry next session.
-
-Why the type update works: `RegionBehavior.type` is a `DocumentTypeField` (`common/data/fields.mjs:4138`), a plain `StringField` whose validation just requires the value to be in `RegionBehavior.TYPES`. Since both types are registered in `CONFIG.RegionBehavior.dataModels`, the update validates. The data model class is identical, so `system` data round-trips unchanged.
-
-The dispatch path uses a `KNOWN_TYPES` Set so behaviors of either type fire macros, important for the window between "module installed" and "migration ran."
-
-After every active world has had its migration run, you can drop the alias by removing:
-
-- `OLD_TYPE` from `KNOWN_TYPES` in `region-click.mjs`
-- the `OLD_TYPE` keys from `registerRegionClickType()` (both `dataModels` and `typeIcons`)
-- the `region-click-macro.clickMacro` key from `lang/en.json`
+Registration happens unconditionally at init even when the click-dispatch toggle is off, so any existing scene data resolves cleanly during a load. Without this, behaviors of an unknown type get dropped to "Base" and corrupt on save.
 
 ## GM-only secrets
 
@@ -94,7 +75,7 @@ Spoiler-grade, not security-grade. The text remains in the DOM. For real hiding 
 ## Foundry APIs this module relies on
 
 - `Hooks.callAll("init")` fires before `Game.prototype.registerSettings()` (Foundry's own setting registration). World settings storage is populated in the `Game` constructor at `client/game.mjs:67`, so module settings can be registered AND read in init.
-- `controls.regions.tools.cone.shapeData` is cloned by `_createDragShapeData` (`client/canvas/regions/shapes.mjs:295`) when dragging a new cone. Only `shapeData` controls geometry; document fields come from `RegionLayer._createDragPreviewData`.
+- `controls.regions.tools.cone.shapeData` is cloned by `_createDragShapeData` (`client/canvas/layers/mixins/shapes.mjs:296`) when dragging a new cone. Only `shapeData` controls geometry; document fields come from `RegionLayer._createDragPreviewData`.
 - `game.keybindings.register` must be called during `init` (`client-keybindings.mjs:156` throws after).
 - `canvas.templates.preview.children` is where dnd5e's `AbilityTemplate.drawPreview()` adds itself (`dnd5e/module/canvas/ability-template.mjs:147`). The keyboard-rotation handler walks that array to find an active preview.
 - `canvas.mouseInteractionManager.callbacks.clickLeft` is monkey-patched (with a `_dansQolRegionClickWrapped` flag to prevent double-wrapping) to intercept canvas clicks.
@@ -119,7 +100,5 @@ No build step. ES modules load directly via `esmodules` in `module.json`.
 - **Don't gate `registerRegionClickType()`.** It must run unconditionally even when the click feature is toggled off. If you gate it, worlds with existing click behaviors come up with unknown types when the toggle is off, which corrupts data on save.
 - **Don't replace `cone.shapeData` wholesale.** Use `foundry.utils.mergeObject` so future Foundry versions adding fields to the tool object don't break.
 - **Don't register keybindings outside `init`.** `game.keybindings.register` throws after init.
-- **Don't drop the `region-click-macro.clickMacro` alias prematurely.** Until every active world's migration has run, the alias is what lets old data load. If you drop it, also drop the matching `KNOWN_TYPES` entry; otherwise dispatch will silently no-op for any worlds you missed.
-- **Don't add `requiresReload: true` to settings consumed at runtime** (cone angle, cone curvature, rotation step). Forces unnecessary world reloads.
-- **Don't rename `MODULE_ID` again.** Settings won't carry over, the RegionBehavior type string would change, and you'd need another migration. Module-id changes are expensive.
-- **Don't run the migration outside the `ready` hook.** Earlier hooks may not have all scenes hydrated; later is fine but `ready` is the conventional point.
+- **Don't add `requiresReload: true` to settings consumed at runtime** (cone angle, cone curvature, rotation step, rotation enabled). Forces unnecessary world reloads.
+- **Don't rename `MODULE_ID` again.** Settings won't carry over, the RegionBehavior type string would change, and existing scene data would break. Module-id changes are expensive.

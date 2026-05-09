@@ -7,8 +7,7 @@ export const SETTINGS = {
     rotationEnabled: "keyboardRotationEnabled",
     rotationStep: "keyboardRotationStep",
     regionClickEnabled: "regionClickEnabled",
-    secretsHideEnabled: "gmOnlySecretsEnabled",
-    regionClickMigrated: "regionClickTypeMigrated"
+    secretsHideEnabled: "gmOnlySecretsEnabled"
 };
 
 const RELOAD = { requiresReload: true };
@@ -83,12 +82,5 @@ export function registerSettings() {
         type: Boolean,
         default: false,
         ...RELOAD
-    });
-
-    game.settings.register(MODULE_ID, SETTINGS.regionClickMigrated, {
-        scope: "world",
-        config: false,
-        type: Boolean,
-        default: false
     });
 }

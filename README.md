@@ -37,8 +37,10 @@ While a spell template follows your cursor, mouse-wheel is normally the only way
 
 | Setting | Scope | Notes |
 |---|---|---|
-| Keyboard Rotation: Enable | Client | Per-user toggle. Reload required. |
-| Keyboard Rotation: Step | Client | Degrees per keypress (1–90). Hold **Shift** for fine 1° rotation. Live. |
+| Keyboard Rotation: Enable | World | Master toggle. Live. |
+| Keyboard Rotation: Step | World | Degrees per keypress (1–90). Hold **Shift** for fine 1° rotation. Live. |
+
+The Q/E keybindings themselves remain per-user, editable in Configure Controls.
 
 Bindings (Configure Controls → Dan's QoL):
 

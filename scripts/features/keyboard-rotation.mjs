@@ -21,6 +21,8 @@ export function registerKeyboardRotation() {
 }
 
 function handleRotation(sign, fineMode) {
+    if (!game.settings.get(MODULE_ID, SETTINGS.rotationEnabled)) return false;
+
     const preview = canvas?.templates?.preview?.children?.find(c => c?.document);
     if (!preview) return false;
 

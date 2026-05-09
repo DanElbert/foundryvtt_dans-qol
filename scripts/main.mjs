@@ -14,8 +14,12 @@ Hooks.once("init", () => {
     // or migration state.
     registerRegionClickType();
 
+    // Always-on: keybindings must register at init regardless of toggle state,
+    // because game.keybindings.register throws after init. The handler reads
+    // the setting at runtime so toggling takes effect without a reload.
+    registerKeyboardRotation();
+
     if (enabled(SETTINGS.coneEnabled)) registerConeDefaults();
-    if (enabled(SETTINGS.rotationEnabled)) registerKeyboardRotation();
     if (enabled(SETTINGS.regionClickEnabled)) registerRegionClickDispatch();
     if (enabled(SETTINGS.secretsHideEnabled)) registerGMOnlySecrets();
 });

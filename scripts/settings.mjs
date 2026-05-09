@@ -48,18 +48,17 @@ export function registerSettings() {
 
     game.settings.register(MODULE_ID, SETTINGS.rotationEnabled, {
         name: "Keyboard Rotation: Enable",
-        hint: "Allow rotating a MeasuredTemplate placement preview with the keys bound under Configure Controls. Built for dnd5e's spell template flow but works for any active template preview.",
-        scope: "client",
+        hint: "Allow rotating a MeasuredTemplate placement preview with the keys bound under Configure Controls. Built for dnd5e's spell template flow but works for any active template preview. Per-user keybindings remain editable in Configure Controls.",
+        scope: "world",
         config: true,
         type: Boolean,
-        default: false,
-        ...RELOAD
+        default: false
     });
 
     game.settings.register(MODULE_ID, SETTINGS.rotationStep, {
         name: "Keyboard Rotation: Step (degrees)",
         hint: "Rotation increment per keypress. Hold Shift for finer (1°) rotation.",
-        scope: "client",
+        scope: "world",
         config: true,
         type: Number,
         range: { min: 1, max: 90, step: 1 },

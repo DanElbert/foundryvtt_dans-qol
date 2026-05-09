@@ -35,15 +35,24 @@ A Foundry VTT v14 module bundling four small independent features, each gated by
 ```js
 Hooks.once("init", () => {
     registerSettings();
-    registerRegionClickType();   // always, for data integrity
+    registerRegionClickType();    // always, for data integrity
+    registerKeyboardRotation();   // always, runtime-gated (see below)
     if (enabled(coneEnabled)) registerConeDefaults();
-    if (enabled(rotationEnabled)) registerKeyboardRotation();
     if (enabled(regionClickEnabled)) registerRegionClickDispatch();
     if (enabled(secretsHideEnabled)) registerGMOnlySecrets();
 });
 ```
 
 Why reading settings in `init` works: at init-time the world settings storage is populated. It's set in the `Game` constructor from `data.settings` returned by the server, well before `Game.prototype.initialize()` fires the `init` hook. See `client/game.mjs:67` (constructor) and `client/game.mjs:648-652` (`initialize` calling `Hooks.callAll("init")`). Once `registerSettings()` has declared a key, `game.settings.get(MODULE_ID, key)` returns the stored value (or the default).
+
+### When to gate at init vs at runtime
+
+Two registrations are deliberate exceptions to init-time gating:
+
+- **`registerRegionClickType()`** must run unconditionally to keep the RegionBehavior data model resolvable for any existing scene data, regardless of toggle state.
+- **`registerKeyboardRotation()`** must run unconditionally because `game.keybindings.register` throws after init. The setting is checked inside `handleRotation` at runtime, so toggling takes effect immediately without a reload. Cost: the keybindings show up in Configure Controls even when the feature is disabled.
+
+The other three features (cone defaults, region click dispatch, GM-only secrets) gate registration at init and use `requiresReload: true` on their toggle settings, because their hooks have no cheap runtime gate.
 
 ## RegionBehavior type aliasing plus migration
 

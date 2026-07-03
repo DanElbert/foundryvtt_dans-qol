@@ -7,7 +7,11 @@ export const SETTINGS = {
     rotationEnabled: "keyboardRotationEnabled",
     rotationStep: "keyboardRotationStep",
     regionClickEnabled: "regionClickEnabled",
-    secretsHideEnabled: "gmOnlySecretsEnabled"
+    secretsHideEnabled: "gmOnlySecretsEnabled",
+    compassEnabled: "compassRoseEnabled",
+    compassSceneVisibility: "compassRoseSceneVisibility",
+    compassSceneSize: "compassRoseSceneSize",
+    compassPosition: "compassRosePosition"
 };
 
 const RELOAD = { requiresReload: true };
@@ -82,5 +86,39 @@ export function registerSettings() {
         type: Boolean,
         default: false,
         ...RELOAD
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.compassEnabled, {
+        name: "Compass Rose: Enable",
+        hint: "Show a floating compass rose over the canvas, just for you. Drag to move; scroll over it to resize (per scene). Per-scene visibility toggles from the token controls toolbar; the GM sets each scene's rotation in the scene configuration (Basics tab).",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: () => Hooks.callAll(`${MODULE_ID}.refreshCompass`)
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.compassSceneVisibility, {
+        name: "Compass Rose: Scene Visibility",
+        scope: "client",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.compassSceneSize, {
+        name: "Compass Rose: Scene Size",
+        scope: "client",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.compassPosition, {
+        name: "Compass Rose: Position",
+        scope: "client",
+        config: false,
+        type: Object,
+        default: null
     });
 }

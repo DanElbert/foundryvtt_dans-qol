@@ -4,7 +4,7 @@ Notes for future Claude sessions working on this module. User-facing docs live i
 
 ## What this is
 
-A Foundry VTT v14 module bundling four small independent features, each gated by its own setting. Three were ported from earlier single-feature modules (`region_click_macro`, `dans-5e-templates`); one (GM-only secrets) is new.
+A Foundry VTT v14 module bundling five small independent features, each gated by its own setting. Three were ported from earlier single-feature modules (`region_click_macro`, `dans-5e-templates`); GM-only secrets and the compass rose are new.
 
 ## Layout
 
@@ -18,7 +18,9 @@ A Foundry VTT v14 module bundling four small independent features, each gated by
 | `scripts/features/keyboard-rotation.mjs` | `registerKeyboardRotation()`. Q/E keybindings rotating an active MeasuredTemplate preview. |
 | `scripts/features/region-click.mjs` | `ClickMacroBehaviorType` data model + type registration + click dispatch. |
 | `scripts/features/gm-only-secrets.mjs` | `ready` hook adds body classes. The work is in `styles/gm-only-secrets.css`. |
+| `scripts/features/compass-rose.mjs` | `registerCompassRose()`. Floating DOM/SVG compass overlay: per-user enable, per-user-per-scene visibility, per-scene rotation flag, SceneConfig field injection, token-controls toggle tool. |
 | `styles/gm-only-secrets.css` | Hides `.secret` for non-GMs. Scoped to `body.dans-qol-secrets` so the rules don't apply unless the feature is enabled. |
+| `styles/compass-rose.css` | Position/size/opacity for the `#dans-qol-compass` overlay. |
 | `lang/en.json` | RegionBehavior type display names plus ClickMacro field/permission strings. |
 | `sync.sh` | rsync to dev Foundry box. Gitignored. |
 
@@ -51,6 +53,7 @@ Two registrations are deliberate exceptions to init-time gating:
 
 - **`registerRegionClickType()`** must run unconditionally to keep the RegionBehavior data model resolvable for any existing scene data, regardless of toggle state.
 - **`registerKeyboardRotation()`** must run unconditionally because `game.keybindings.register` throws after init. The setting is checked inside `handleRotation` at runtime, so toggling takes effect immediately without a reload. Cost: the keybindings show up in Configure Controls even when the feature is disabled.
+- **`registerCompassRose()`** runs unconditionally because all its hooks are cheap and runtime-gated on the client-scoped enable setting. The setting's `onChange` fires the module-internal `dans-qol.refreshCompass` hook (declared in `settings.mjs`, listened to in `compass-rose.mjs` to avoid an import cycle), so toggling takes effect immediately.
 
 The other three features (cone defaults, region click dispatch, GM-only secrets) gate registration at init and use `requiresReload: true` on their toggle settings, because their hooks have no cheap runtime gate.
 
@@ -71,6 +74,17 @@ body.dans-qol-secrets.dans-qol-gm .secret { display: block; }
 ```
 
 Spoiler-grade, not security-grade. The text remains in the DOM. For real hiding you'd need to wrap `TextEditor.enrichHTML` (or the per-sheet `_prepareContext` calls in dnd5e that pass `secrets: this.actor.isOwner`) and force `secrets: false` for non-GMs server-side.
+
+## Compass rose
+
+Four layers of state, deliberately split:
+
+- **Per-user enable**: client-scoped setting, off by default. Gates everything at runtime (overlay, toolbar toggle). The SceneConfig rotation field is injected regardless, so a GM who personally keeps the compass off can still set rotation for players.
+- **Per-user-per-scene visibility**: client-scoped hidden setting holding a `{sceneId: boolean}` map (`config: false`). Unlisted scenes default to visible. Toggled via a `toggle: true` tool added to `controls.tokens.tools` in `getSceneControlButtons`; `canvasReady` re-renders controls with `{reset: true}` so the toggle's `active` state tracks the viewed scene.
+- **Per-user-per-scene size**: client-scoped hidden `{sceneId: px}` map. Mouse wheel over the overlay resizes in `WHEEL_STEP` increments, clamped to `[MIN_SIZE, MAX_SIZE]`. Safe to intercept: core canvas zoom bails unless `document.elementFromPoint` is `#board` (`mouse-manager.mjs:41`). Saves are debounced 250ms, so `onWheel` reads the current size from `el.offsetWidth`, not the setting — the setting lags mid-scroll.
+- **Per-scene rotation**: scene flag `flags.dans-qol.compassRotation` (degrees clockwise). Set via a plain `<input type="number" name="flags.dans-qol.compassRotation">` appended to SceneConfig's basics tab in `renderSceneConfig` — DocumentSheetV2 expands form data into the update, and `FormDataExtended` casts `type="number"` inputs to Number (`form-data-extended.mjs:201`), so no submit handler is needed. GM-only falls out of SceneConfig's own permission gate. The injection guard checks for an existing input because the render hook re-fires on part re-renders (which wipe the injected fieldset).
+
+The overlay is a `position: fixed` div on `document.body` (id `dans-qol-compass`) holding an inline SVG; drag position is `left`/`top` on the div (persisted per-user in a hidden client setting), size is `width`/`height` set by `updateCompass`. Rotation applies only to the `.rose` SVG group (`transform="rotate(θ 50 50)"`); the N/E/S/W `<text>` elements are repositioned by `applyLayout` along the label ring (`data-angle` + scene rotation) so the letters orbit the rim but stay upright. `applyLayout` also gives the labels a floor of `MIN_LABEL_PX` screen pixels: below the compass size where `BASE_FONT` viewBox units would render smaller than that, it grows the font units to compensate and pulls the label ring inward (`radius = 46 - font/2`) so the glyphs stay inside the rim; at default size and up the formula reduces to the base look. `onWheel` re-runs `applyLayout` directly with the live size, since `updateCompass` would read the debounce-lagged setting. `canvasTearDown` removes the overlay so a stale rose never shows during scene loads; `updateScene` re-rotates when the flag changes.
 
 ## Foundry APIs this module relies on
 

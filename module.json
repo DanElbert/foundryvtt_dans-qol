@@ -17,7 +17,8 @@
         "scripts/main.mjs"
     ],
     "styles": [
-        "styles/gm-only-secrets.css"
+        "styles/gm-only-secrets.css",
+        "styles/compass-rose.css"
     ],
     "languages": [
         {

@@ -1,0 +1,27 @@
+#dans-qol-compass {
+    position: fixed;
+    top: 80px;
+    left: 120px;
+    width: 96px;
+    height: 96px;
+    z-index: 30;
+    cursor: grab;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    touch-action: none;
+    user-select: none;
+}
+
+#dans-qol-compass:hover {
+    opacity: 1;
+}
+
+#dans-qol-compass:active {
+    cursor: grabbing;
+}
+
+#dans-qol-compass svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}

@@ -1,6 +1,6 @@
 # Dan's QoL
 
-Quality-of-life features for Foundry VTT and dnd5e. Four independent features, each off by default and toggleable from settings.
+Quality-of-life features for Foundry VTT and dnd5e. Five independent features, each off by default and toggleable from settings.
 
 ## Compatibility
 
@@ -94,6 +94,22 @@ Hides unrevealed `<section class="secret">` blocks from non-GM users. Useful whe
 - Chat cards are not covered. dnd5e strips secrets server-side from many chat enrichment paths, so the CSS rule has nothing to operate on there.
 
 If those caveats are deal-breakers, you'd need a libWrapper-based approach that overrides the `secrets: <doc>.isOwner` argument that dnd5e passes to `TextEditor.enrichHTML`. Out of scope for this module.
+
+### 5. Floating compass rose
+
+A draggable compass rose overlay so players always know which way is north, even on maps drawn with north somewhere else.
+
+| Setting | Scope | Notes |
+|---|---|---|
+| Compass Rose: Enable | Client (per user) | Master toggle, off by default. Live, no reload. |
+
+Usage:
+
+- **Enable it** per user in Module Settings. Nothing is shown to users who leave it off.
+- **Hide/show per scene** with the compass button in the token controls toolbar. This is also per-user; one player hiding it on a scene doesn't affect anyone else. New scenes default to shown.
+- **Set the rotation per scene** (GM only) in the scene's configuration, Basics tab, under "Dan's QoL". Degrees clockwise; 0 means north is up. The rotation is scene data, so it applies to every user who has the compass enabled. The N/E/S/W letters travel around the rim but stay upright.
+- **Move it** by dragging. The position is remembered per user across scenes and sessions.
+- **Resize it** with the mouse wheel while hovering over it. The size is remembered per user, per scene. The direction letters never shrink below a readable size; on a small compass they grow relative to the rose instead.
 
 ## Replacing older modules
 

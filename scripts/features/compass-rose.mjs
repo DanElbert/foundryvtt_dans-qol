@@ -107,7 +107,7 @@ function addToggleTool(controls) {
     const order = Math.max(0, ...Object.values(tokens.tools).map(t => t.order ?? 0)) + 1;
     tokens.tools[TOOL_NAME] = {
         name: TOOL_NAME,
-        title: "Toggle Compass Rose (this scene, this user)",
+        title: "Toggle Compass",
         icon: "fa-solid fa-compass",
         toggle: true,
         order,

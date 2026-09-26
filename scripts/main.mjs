@@ -5,6 +5,7 @@ import { registerKeyboardRotation } from "./features/keyboard-rotation.mjs";
 import { registerRegionClickType, registerRegionClickDispatch } from "./features/region-click.mjs";
 import { registerGMOnlySecrets } from "./features/gm-only-secrets.mjs";
 import { registerCompassRose } from "./features/compass-rose.mjs";
+import { registerLeftClickRelease } from "./features/left-click-release.mjs";
 
 const enabled = key => game.settings.get(MODULE_ID, key);
 
@@ -28,6 +29,10 @@ Hooks.once("init", () => {
     // toggling the compass takes effect without a reload.
     registerCompassRose();
     active.push(`compass-rose (always; toggle: ${enabled(SETTINGS.compassEnabled) ? "on" : "off"})`);
+
+    // Always-on: applies at setup, because core settings register after init.
+    registerLeftClickRelease();
+    active.push(`left-click-release (always; toggle: ${enabled(SETTINGS.leftClickReleaseEnabled) ? "on" : "off"})`);
 
     if (enabled(SETTINGS.coneEnabled)) { registerConeDefaults(); active.push("cone-defaults"); }
     if (enabled(SETTINGS.regionClickEnabled)) { registerRegionClickDispatch(); active.push("region-click-dispatch"); }

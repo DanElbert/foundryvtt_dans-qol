@@ -4,7 +4,7 @@ Notes for future Claude sessions working on this module. User-facing docs live i
 
 ## What this is
 
-A Foundry VTT v14 module bundling five small independent features, each gated by its own setting. Three were ported from earlier single-feature modules (`region_click_macro`, `dans-5e-templates`); GM-only secrets and the compass rose are new.
+A Foundry VTT v14 module bundling six small independent features, each gated by its own setting. Three were ported from earlier single-feature modules (`region_click_macro`, `dans-5e-templates`); GM-only secrets, the compass rose, and the left-click release default are new.
 
 ## Layout
 
@@ -19,6 +19,7 @@ A Foundry VTT v14 module bundling five small independent features, each gated by
 | `scripts/features/region-click.mjs` | `ClickMacroBehaviorType` data model + type registration + click dispatch. |
 | `scripts/features/gm-only-secrets.mjs` | `ready` hook adds body classes. The work is in `styles/gm-only-secrets.css`. |
 | `scripts/features/compass-rose.mjs` | `registerCompassRose()`. Floating DOM/SVG compass overlay: per-user enable, per-user-per-scene visibility, per-scene rotation flag, SceneConfig field injection, token-controls toggle tool. |
+| `scripts/features/left-click-release.mjs` | `registerLeftClickRelease()`. Mutates the default of core's `leftClickRelease` client setting at `setup` and force-sets it once per browser. |
 | `styles/gm-only-secrets.css` | Hides `.secret` for non-GMs. Scoped to `body.dans-qol-secrets` so the rules don't apply unless the feature is enabled. |
 | `styles/compass-rose.css` | Position/size/opacity for the `#dans-qol-compass` overlay. |
 | `lang/en.json` | RegionBehavior type display names plus ClickMacro field/permission strings. |
@@ -49,13 +50,18 @@ Why reading settings in `init` works: at init-time the world settings storage is
 
 ### When to gate at init vs at runtime
 
-Two registrations are deliberate exceptions to init-time gating:
+Four registrations are deliberate exceptions to init-time gating:
 
 - **`registerRegionClickType()`** must run unconditionally to keep the RegionBehavior data model resolvable for any existing scene data, regardless of toggle state.
 - **`registerKeyboardRotation()`** must run unconditionally because `game.keybindings.register` throws after init. The setting is checked inside `handleRotation` at runtime, so toggling takes effect immediately without a reload. Cost: the keybindings show up in Configure Controls even when the feature is disabled.
 - **`registerCompassRose()`** runs unconditionally because all its hooks are cheap and runtime-gated on the client-scoped enable setting. The setting's `onChange` fires the module-internal `dans-qol.refreshCompass` hook (declared in `settings.mjs`, listened to in `compass-rose.mjs` to avoid an import cycle), so toggling takes effect immediately.
+- **`registerLeftClickRelease()`** runs unconditionally and does its work in a `setup` hook (not `init`), because core's own settings aren't registered until after the `init` hook fires. The world toggle's `onChange` fires `dans-qol.refreshLeftClickRelease` to re-apply live.
 
 The other three features (cone defaults, region click dispatch, GM-only secrets) gate registration at init and use `requiresReload: true` on their toggle settings, because their hooks have no cheap runtime gate.
+
+## Left-click release default
+
+Two mechanisms, because one isn't enough. `game.settings.settings.get("core.leftClickRelease").default = true` changes what `game.settings.get` returns for any browser with nothing in localStorage (client-scope `get` is `storage.getItem(id) ?? setting.default`, evaluated per call, `client-settings.mjs:221`), and it's what the settings UI's Reset Defaults button reads. But the Configure Settings Save handler writes *every* rendered setting to localStorage regardless of whether it changed (`applications/settings/config.mjs:246-252` → `#setClient`), so anyone who has ever saved that form already has an explicit `"false"` stored and never sees the default. Hence the hidden client flag `leftClickReleaseApplied`: on first run with the feature on, force-set the core setting to `true` once, then never touch it again so the user's later choice sticks. Disabling the feature only restores the default; it doesn't rewrite stored values.
 
 ## RegionBehavior type registration
 
@@ -88,7 +94,8 @@ The overlay is a `position: fixed` div on `document.body` (id `dans-qol-compass`
 
 ## Foundry APIs this module relies on
 
-- `Hooks.callAll("init")` fires before `Game.prototype.registerSettings()` (Foundry's own setting registration). World settings storage is populated in the `Game` constructor at `client/game.mjs:67`, so module settings can be registered AND read in init.
+- `Hooks.callAll("init")` fires before `Game.prototype.registerSettings()` (Foundry's own setting registration; `client/game.mjs:652` vs `:660`). World settings storage is populated in the `Game` constructor at `client/game.mjs:67`, so module settings can be registered AND read in init. The flip side: core settings such as `core.leftClickRelease` don't exist in `game.settings.settings` until after init, so anything touching them waits for `setup`.
+- `game.settings.settings` is a plain mutable Map and `ClientSettings#register` has no re-registration guard (`client-settings.mjs:155` overwrites). Client-scope `set` has no `game.ready` requirement (only world/user scope does, `client-settings.mjs:292`), so it's safe at `setup`.
 - `controls.regions.tools.cone.shapeData` is cloned by `_createDragShapeData` (`client/canvas/layers/mixins/shapes.mjs:296`) when dragging a new cone. Only `shapeData` controls geometry; document fields come from `RegionLayer._createDragPreviewData`.
 - `game.keybindings.register` must be called during `init` (`client-keybindings.mjs:156` throws after).
 - `canvas.templates.preview.children` is where dnd5e's `AbilityTemplate.drawPreview()` adds itself (`dnd5e/module/canvas/ability-template.mjs:147`). The keyboard-rotation handler walks that array to find an active preview.

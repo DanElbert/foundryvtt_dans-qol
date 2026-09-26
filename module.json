@@ -1,8 +1,8 @@
 {
     "id": "dans-qol",
     "title": "Dan's QoL",
-    "description": "Quality-of-life features for Foundry VTT and dnd5e. Each feature is independently toggleable and defaults to off.",
-    "version": "1.1.0",
+    "description": "Six quality-of-life features for Foundry VTT and dnd5e. Each is independently toggleable and defaults to off.",
+    "version": "1.3.0",
     "compatibility": {
         "minimum": 14,
         "verified": "14.361"

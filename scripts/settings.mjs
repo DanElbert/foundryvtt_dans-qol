@@ -11,7 +11,9 @@ export const SETTINGS = {
     compassEnabled: "compassRoseEnabled",
     compassSceneVisibility: "compassRoseSceneVisibility",
     compassSceneSize: "compassRoseSceneSize",
-    compassPosition: "compassRosePosition"
+    compassPosition: "compassRosePosition",
+    leftClickReleaseEnabled: "leftClickReleaseEnabled",
+    leftClickReleaseApplied: "leftClickReleaseApplied"
 };
 
 const RELOAD = { requiresReload: true };
@@ -120,5 +122,23 @@ export function registerSettings() {
         config: false,
         type: Object,
         default: null
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.leftClickReleaseEnabled, {
+        name: "Left-Click Release: Enable",
+        hint: "Default Foundry's \"Left-Click to Release Objects\" to on for every user in this world, so clicking empty canvas deselects. Applied once per browser; anyone can still turn it back off afterwards in Core Settings.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: () => Hooks.callAll(`${MODULE_ID}.refreshLeftClickRelease`)
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.leftClickReleaseApplied, {
+        name: "Left-Click Release: Applied",
+        scope: "client",
+        config: false,
+        type: Boolean,
+        default: false
     });
 }

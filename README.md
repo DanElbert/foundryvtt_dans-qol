@@ -1,6 +1,6 @@
 # Dan's QoL
 
-Quality-of-life features for Foundry VTT and dnd5e. Five independent features, each off by default and toggleable from settings.
+Quality-of-life features for Foundry VTT and dnd5e. Six independent features, each off by default and toggleable from settings.
 
 ## Compatibility
 
@@ -110,6 +110,20 @@ Usage:
 - **Set the rotation per scene** (GM only) in the scene's configuration, Basics tab, under "Dan's QoL". Degrees clockwise; 0 means north is up. The rotation is scene data, so it applies to every user who has the compass enabled. The N/E/S/W letters travel around the rim but stay upright.
 - **Move it** by dragging. The position is remembered per user across scenes and sessions.
 - **Resize it** with the mouse wheel while hovering over it. The size is remembered per user, per scene. The direction letters never shrink below a readable size; on a small compass they grow relative to the rose instead.
+
+### 6. Left-Click Release default
+
+Foundry ships with "Left-Click to Release Objects" off, so clicking empty canvas doesn't deselect and every new player has to be told where the checkbox lives. This feature defaults it to on for everyone in the world.
+
+| Setting | Scope | Notes |
+|---|---|---|
+| Left-Click Release: Enable | World | Live, no reload. |
+
+Notes:
+
+- Applied once per browser. After that, a user who prefers the old behavior can turn it back off in **Core Settings** and their choice sticks.
+- "Reset Defaults" in Configure Settings lands on the new default while the feature is on.
+- Turning the feature off restores Foundry's default for fresh browsers but leaves everyone's saved choice alone.
 
 ## Replacing older modules
 

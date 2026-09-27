@@ -5,7 +5,7 @@ Quality-of-life features for Foundry VTT and dnd5e. Six independent features, ea
 ## Compatibility
 
 - Foundry VTT v14+ (verified on 14.361)
-- All features work in any system. Keyboard rotation was built for dnd5e's `AbilityTemplate` flow but activates during any MeasuredTemplate placement preview.
+- All features work in any system. Keyboard rotation was built for dnd5e's spell-template placement but activates during any Region placement (dnd5e 6.0+) or MeasuredTemplate placement preview (dnd5e 5.x).
 
 ## Installation
 

@@ -15,7 +15,7 @@ A Foundry VTT v14 module bundling six small independent features, each gated by 
 | `scripts/settings.mjs` | `MODULE_ID`, `SETTINGS` map, `registerSettings()`. |
 | `scripts/log.mjs` | Shared `[dans-qol]` console wrapper. |
 | `scripts/features/cone-defaults.mjs` | `registerConeDefaults()`. `getSceneControlButtons` hook merges `{angle, curvature}` into `controls.regions.tools.cone.shapeData`. |
-| `scripts/features/keyboard-rotation.mjs` | `registerKeyboardRotation()`. Q/E keybindings rotating an active MeasuredTemplate preview. |
+| `scripts/features/keyboard-rotation.mjs` | `registerKeyboardRotation()`. Q/E keybindings rotating an active Region placement preview (dnd5e 6.0+ spell templates) or, failing that, a MeasuredTemplate preview (dnd5e 5.x). |
 | `scripts/features/region-click.mjs` | `ClickMacroBehaviorType` data model + type registration + click dispatch. |
 | `scripts/features/gm-only-secrets.mjs` | `ready` hook adds body classes. The work is in `styles/gm-only-secrets.css`. |
 | `scripts/features/compass-rose.mjs` | `registerCompassRose()`. Floating DOM/SVG compass overlay: per-user enable, per-user-per-scene visibility, per-scene rotation flag, SceneConfig field injection, token-controls toggle tool. |
@@ -99,6 +99,7 @@ The overlay is a `position: fixed` div on `document.body` (id `dans-qol-compass`
 - `controls.regions.tools.cone.shapeData` is cloned by `_createDragShapeData` (`client/canvas/layers/mixins/shapes.mjs:296`) when dragging a new cone. Only `shapeData` controls geometry; document fields come from `RegionLayer._createDragPreviewData`.
 - `game.keybindings.register` must be called during `init` (`client-keybindings.mjs:156` throws after).
 - `canvas.templates.preview.children` is where dnd5e's `AbilityTemplate.drawPreview()` adds itself (`dnd5e/module/canvas/ability-template.mjs:147`). The keyboard-rotation handler walks that array to find an active preview.
+- dnd5e 6.0 dropped `AbilityTemplate` placement: `Activity#placeTemplate` → `TemplatePlacement` (`dnd5e/module/canvas/template-placement.mjs`) → core `canvas.regions.placeRegions`, so there is no template preview. The handler checks `canvas.regions._placementContext` first and replays core's `RegionLayer._onMouseWheel` (`foundryvtt/client/canvas/layers/regions.mjs`): call the context's `onRotate` (dnd5e vetoes rotating grid-aligned squares there), `shape.rotate`, `document.updateSource({shapes})`, `updateShapeConstraints()`, `refreshShapes` render flag, `onChange`. Keep it in step with that method on core upgrades. Rotation-less shapes (circle, emanation) return `false` so the key falls through.
 - `canvas.mouseInteractionManager.callbacks.clickLeft` is monkey-patched (with a `_dansQolRegionClickWrapped` flag to prevent double-wrapping) to intercept canvas clicks.
 - `CONFIG.RegionBehavior.dataModels[<type-string>]` is the registry for behavior data models. Multiple keys can point at the same class (alias pattern).
 - `RegionBehavior.type` is a `DocumentTypeField` (a mutable `StringField`); changing it via `update({type})` is supported as long as the new value is in `RegionBehavior.TYPES`.
